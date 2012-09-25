@@ -29,7 +29,7 @@
 		7A184F6C161222B700559E00 /* DDParserTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F55161222B700559E00 /* DDParserTypes.m */; };
 		7A184F6D161222B700559E00 /* DDTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F57161222B700559E00 /* DDTypes.m */; };
 		7A184F6E161222B700559E00 /* NSString+DDMathParsing.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F59161222B700559E00 /* NSString+DDMathParsing.m */; };
-		7A184F721612257B00559E00 /* OCJiggerCalculatorAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F711612257B00559E00 /* OCJiggerCalculatorAction.m */; };
+		7A184F721612257B00559E00 /* OCJiggerAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F711612257B00559E00 /* OCJiggerAction.m */; };
 		7A184F761612258600559E00 /* OCJiggerCalculatorSheet.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A184F741612258600559E00 /* OCJiggerCalculatorSheet.xib */; };
 		7A184F861612281B00559E00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A184F841612281B00559E00 /* Localizable.strings */; };
 		7A184F89161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F88161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m */; };
@@ -86,8 +86,8 @@
 		7A184F57161222B700559E00 /* DDTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDTypes.m; sourceTree = "<group>"; };
 		7A184F58161222B700559E00 /* NSString+DDMathParsing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+DDMathParsing.h"; sourceTree = "<group>"; };
 		7A184F59161222B700559E00 /* NSString+DDMathParsing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+DDMathParsing.m"; sourceTree = "<group>"; };
-		7A184F701612257B00559E00 /* OCJiggerCalculatorAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OCJiggerCalculatorAction.h; path = Classes/OCJiggerCalculatorAction.h; sourceTree = "<group>"; };
-		7A184F711612257B00559E00 /* OCJiggerCalculatorAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OCJiggerCalculatorAction.m; path = Classes/OCJiggerCalculatorAction.m; sourceTree = "<group>"; };
+		7A184F701612257B00559E00 /* OCJiggerAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OCJiggerAction.h; path = Classes/OCJiggerAction.h; sourceTree = "<group>"; };
+		7A184F711612257B00559E00 /* OCJiggerAction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OCJiggerAction.m; path = Classes/OCJiggerAction.m; sourceTree = "<group>"; };
 		7A184F751612258600559E00 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = OCJiggerCalculatorSheet.xib; sourceTree = "<group>"; };
 		7A184F7E1612266500559E00 /* MRRegularExpression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRRegularExpression.h; sourceTree = "<group>"; };
 		7A184F7F1612266500559E00 /* MRRegularExpressionAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MRRegularExpressionAdditions.h; sourceTree = "<group>"; };
@@ -145,8 +145,8 @@
 				7A184F731612258600559E00 /* en.lproj */,
 				7A184F87161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.h */,
 				7A184F88161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m */,
-				7A184F701612257B00559E00 /* OCJiggerCalculatorAction.h */,
-				7A184F711612257B00559E00 /* OCJiggerCalculatorAction.m */,
+				7A184F701612257B00559E00 /* OCJiggerAction.h */,
+				7A184F711612257B00559E00 /* OCJiggerAction.m */,
 				7A184F26161220FA00559E00 /* XML Based */,
 				7A184F23161220FA00559E00 /* Supporting Files */,
 			);
@@ -345,7 +345,7 @@
 				7A184F6C161222B700559E00 /* DDParserTypes.m in Sources */,
 				7A184F6D161222B700559E00 /* DDTypes.m in Sources */,
 				7A184F6E161222B700559E00 /* NSString+DDMathParsing.m in Sources */,
-				7A184F721612257B00559E00 /* OCJiggerCalculatorAction.m in Sources */,
+				7A184F721612257B00559E00 /* OCJiggerAction.m in Sources */,
 				7A184F89161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

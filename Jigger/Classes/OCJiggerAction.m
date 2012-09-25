@@ -1,21 +1,23 @@
 //
-//  OCJiggerCalculatorAction.m
+//  OCJiggerAction.m
 //  Jigger.sugar
 //
 //  Created by Ian Beck on 04/26/12.
 //  Copyright 2012 One Crayon. MIT license.
 //
 
-#import "OCJiggerCalculatorAction.h"
+#import "OCJiggerAction.h"
 #import "NSObject+OCJiggerTextActionContextAdditions.h"
 #import "DDMathParser.h"
 #import <EspressoTextActions.h>
+#import <NSString+MRFoundation.h>
 
 
-@implementation OCJiggerCalculatorAction
+@implementation OCJiggerAction
 
 @synthesize customSheet;
 @synthesize calcField;
+@synthesize tabView;
 
 - (id)init {
 	self = [super init];
@@ -23,7 +25,11 @@
 		NSString *numberRE = @"-?\\$?(?:\\.\\d+|\\d[\\d.]*)(?:[a-zA-Z]*|%?)";
 		singleNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", numberRE]];
 		selNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", numberRE]];
-		targetRanges = [[NSMutableArray alloc] init];
+		NSString *colorRE = @"#\\h{3,6}";
+		singleColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", colorRE]];
+		selColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", colorRE]];
+		numberRanges = [[NSMutableArray alloc] init];
+		colorRanges = [[NSMutableArray alloc] init];
 	}
 
 	return self;
@@ -33,10 +39,16 @@
 - (void)dealloc {
 	MRRelease(singleNumberRE);
 	MRRelease(selNumberRE);
-	MRRelease(targetRanges);
+	MRRelease(singleColorRE);
+	MRRelease(selColorRE);
+	MRRelease(numberRanges);
+	MRRelease(colorRanges);
+	MRRelease(startValue);
 	MRRelease(myContext);
 	MRRelease(customSheet);
+	MRRelease(colorPanel);
 	MRRelease(calcField);
+	MRRelease(tabView);
 	[super dealloc];
 }
 
@@ -48,12 +60,27 @@
 	NSRange firstRange = [[[context selectedRanges] objectAtIndex:0] rangeValue];
 	if (firstRange.length == 0) {
 		NSRange range;
-		NSString *number = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%"] range:&range];
-		if ([[number matchesForExpression:singleNumberRE] count] > 0) {
+		NSString *number = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&range];
+		NSArray *numberMatches = [number matchesForExpression:singleNumberRE];
+		NSArray *colorMatches = [number matchesForExpression:singleColorRE];
+		if ([numberMatches count] > 0 && [colorMatches count] > 0) {
+			return @"single";
+		} else if ([numberMatches count] > 0) {
 			return @"@number-single";
+		} else if ([colorMatches count] > 0) {
+			return @"color-single";
 		}
 	} else {
-		return @"@number-selection";
+		NSString *sel = [[context string] substringWithRange:firstRange];
+		NSArray *numbersMatches = [sel matchesForExpression:selNumberRE];
+		NSArray *colorsMatches = [sel matchesForExpression:selColorRE];
+		if ([numbersMatches count] > 0 && [colorsMatches count] > 0) {
+			return @"@selection";
+		} else if ([numbersMatches count] > 0) {
+			return @"@number-selection";
+		} else if ([colorsMatches count] > 0) {
+			return @"color-selection";
+		}
 	}
 	return nil;
 }
@@ -61,70 +88,134 @@
 - (BOOL)performActionWithContext:(id)context error:(NSError **)outError {
 	// Grab our range and figure out what we are working with
 	NSRange range = [[[context selectedRanges] objectAtIndex:0] rangeValue];
-	NSString *startValue = @"";
-	[targetRanges removeAllObjects];
+	startValue = @"";
+	[numberRanges removeAllObjects];
+	[colorRanges removeAllObjects];
+	targetRange = NSMakeRange(NSNotFound, 0);
 	if (range.length == 0) {
-		// No selection, so grab the number near the cursor if it exists
+		// No selection, so grab the number/color near the cursor if it exists
 		NSRange numberRange;
-		NSString *number = [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%"] range:&numberRange];
+		NSString *number = [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&numberRange];
 		if ([[number matchesForExpression:singleNumberRE] count] > 0) {
 			startValue = number;
-			[targetRanges addObject:[NSValue valueWithRange:numberRange]];
-		} else {
-			[targetRanges addObject:[NSValue valueWithRange:range]];
+			[numberRanges addObject:[NSValue valueWithRange:numberRange]];
+		}
+		if ([[number matchesForExpression:singleColorRE] count] > 0) {
+			startValue = number;
+			[colorRanges addObject:[NSValue valueWithRange:numberRange]];
+		}
+		
+		// If we don't have a color or number, then we are inserting a new one at the cursor
+		if ([numberRanges count] == 0 && [colorRanges count] == 0) {
+			targetRange = range;
 		}
 	} else {
 		// Find our target ranges
-		NSArray *matches;
+		NSArray *numberMatches;
+		NSArray *colorMatches;
 		for (NSValue *value in [context selectedRanges]) {
 			range = [value rangeValue];
-			matches = [[context string] matchesForExpression:selNumberRE inRange:range];
-			for (MRRegularExpressionMatch *match in matches) {
-				[targetRanges addObject:[NSValue valueWithRange:[match range]]];
+			numberMatches = [[context string] matchesForExpression:selNumberRE inRange:range];
+			colorMatches = [[context string] matchesForExpression:selColorRE inRange:range];
+			for (MRRegularExpressionMatch *match in numberMatches) {
+				[numberRanges addObject:[NSValue valueWithRange:[match range]]];
+			}
+			for (MRRegularExpressionMatch *match in colorMatches) {
+				[colorRanges addObject:[NSValue valueWithRange:[match range]]];
 			}
 		}
 
-		// Set our placeholder text
-		if ([targetRanges count] == 1) {
-			startValue = [[context string] substringWithRange:[[targetRanges objectAtIndex:0] rangeValue]];
-		} else if ([targetRanges count] > 1) {
-			startValue = @"##";
-		} else {
-			// No numbers in this selection; exit with a beep
+		// Make sure we have *something* to adjust, and exit with a beep if not
+		if ([numberRanges count] == 0 && [colorRanges count] == 0) {
 			return NO;
 		}
 	}
 
-	// Load in our GUI if it hasn't been loaded already
-	if (!customSheet) {
-		[NSBundle loadNibNamed:@"OCJiggerCalculatorSheet" owner:self];
-		[calcField setDelegate:self];
-		// Set our tokenizing character to something they are unlikely to ever use
-		[calcField setTokenizingCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+	// We only don't need the GUI if the only thing available to modify is a color (since then we can just load the color panel)
+	if ([numberRanges count] == 0 && [colorRanges count] > 0) {
+		// Grab our first color if we don't have a startValue already
+		if (MRIsEmptyString(startValue)) {
+			startValue = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
+		}
+		// Enable our color modification mode
+		[self activateColorMode:self];
+	} else {
+		if (!customSheet) {
+			[NSBundle loadNibNamed:@"OCJiggerCalculatorSheet" owner:self];
+			[calcField setDelegate:self];
+			// Set our tokenizing character to something they are unlikely to ever use
+			[calcField setTokenizingCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+		}
+		
+		// Immediately display the calculation controls if we only have numbers to work with
+		if ([numberRanges count] > 0 && [colorRanges count] == 0) {
+			// Enable calculation mode
+			[self activateCalculateMode:self];
+		} else {
+			[tabView selectTabViewItemAtIndex:0];
+		}
+		
+		// Display the sheet
+		[NSApp beginSheet:customSheet
+		   modalForWindow:[context windowForSheet]
+			modalDelegate:self
+		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+			  contextInfo:nil
+		 ];
 	}
-	// Stick in the placeholder number or tag
-	[calcField setStringValue:startValue];
-	// Display the sheet
-	[NSApp beginSheet:customSheet
-	   modalForWindow:[context windowForSheet]
-		modalDelegate:self
-	   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-		  contextInfo:nil
-	];
-	// Set the selection so that our cursor is at the end of the field
-	NSText *fieldEditor = [customSheet fieldEditor:YES forObject:calcField];
-	[fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
-	// Save our context for later
+	// Save our context and startValue for later
 	myContext = [context retain];
+	[startValue retain];
 	// Exit the action now that control has been passed to the sheet
 	return YES;
 }
 
-- (IBAction) doSubmitSheet:(id)sender {
+- (IBAction)activateColorMode:(id)sender
+{
+	// Close this sheet if is open
+	if ([[myContext windowForSheet] attachedSheet] != nil) {
+		[self cancel:self];
+	}
+	
+	colorPanel = [[NSColorPanel sharedColorPanel] retain];
+	[colorPanel setContinuous:YES];
+	// TODO: display the color palette modally, link up the action, and automatically insert colors when they change
+}
+
+- (IBAction)activateCalculateMode:(id)sender
+{
+	[tabView selectTabViewItemAtIndex:1];
+	// Make sure we have a placeholder string
+	if (MRIsEmptyString(startValue)) {
+		// No need to retain startValue here since we only need to use it the once at this point
+		if ([numberRanges count] == 1) {
+			[startValue release];
+			startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
+		} else if ([numberRanges count] > 1) {
+			[startValue release];
+			startValue = @"##";
+		}
+	}
+	
+	// If we are working with a targetRange, then that means we are inserting something; stick it in our numberRanges array
+	if (targetRange.location != NSNotFound) {
+		[numberRanges addObject:[NSValue valueWithRange:targetRange]];
+	}
+	
+	// Stick in the placeholder number or tag
+	[calcField setStringValue:startValue];
+	// Set the selection so that our cursor is at the end of the field
+	[customSheet makeFirstResponder:calcField];
+	NSText *fieldEditor = [customSheet fieldEditor:YES forObject:calcField];
+	[fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
+	
+}
+
+- (IBAction)doSubmitSheet:(id)sender {
 	[NSApp endSheet:customSheet returnCode:1];
 }
 
-- (IBAction) cancel:(id)sender {
+- (IBAction)cancel:(id)sender {
 	[NSApp endSheet:customSheet returnCode:0];
 }
 
@@ -149,7 +240,7 @@
 		[currencyFormatter setPositiveFormat:@"¤#0.00"];
 		[currencyFormatter setNegativeFormat:@"-¤#0.00"];
 		[currencyFormatter setCurrencySymbol:@"$"];
-		for (NSValue *value in targetRanges) {
+		for (NSValue *value in numberRanges) {
 			// Grab our range, and determine our calculation
 			range = [value rangeValue];
 			calculation = [[rootCalculation stringByReplacingOccurrencesOfString:@"##" withString:[[myContext string] substringWithRange:range]] mutableCopy];
@@ -241,7 +332,7 @@
 	// Grab our numbers
 	NSRange range;
 	NSMutableArray *numbers = [NSMutableArray array];
-	for (NSValue *value in targetRanges) {
+	for (NSValue *value in numberRanges) {
 		range = [value rangeValue];
 		[numbers addObject:[[myContext string] substringWithRange:range]];
 	}
@@ -266,111 +357,6 @@
 		return YES;
 	}
 	return NO;
-}
-
-
-
-
-
-// TODO: remove this if I can't find any use for the logic
-- (void)selectCalculationAtIndex:(NSUInteger)index forContext:(id)context {
-	// Setup our character sets for identifying the characters in the string
-	NSMutableCharacterSet *startChars = [[NSCharacterSet decimalDigitCharacterSet] mutableCopy];
-	[startChars addCharactersInString:@"."];
-	NSCharacterSet *prefixChars = [NSCharacterSet characterSetWithCharactersInString:@"-$("];
-	NSCharacterSet *endChars = [NSCharacterSet alphanumericCharacterSet];
-	NSCharacterSet *suffixChars = [NSCharacterSet characterSetWithCharactersInString:@".%)"];
-	NSCharacterSet *punctuationChars = [NSCharacterSet characterSetWithCharactersInString:@"^*/+-()"];
-	NSCharacterSet *whitespaceChars = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-	NSCharacterSet *spaceChars = [NSCharacterSet whitespaceCharacterSet];
-	// Setup our all-encompassing set
-	NSMutableCharacterSet *legalChars = [[NSCharacterSet alphanumericCharacterSet] mutableCopy];
-	[legalChars addCharactersInString:@"($,.^*/+-%)"];
-	[legalChars formUnionWithCharacterSet:spaceChars];
-
-	// Parse backward from our index
-	NSUInteger curIndex = index;
-	NSUInteger lastStartCharIndex = curIndex;
-	unichar character;
-	unichar nextchar;
-	NSMutableString	*word = [NSMutableString string];
-	while (curIndex > 0) {
-		// Grab the previous index
-		curIndex--;
-		character = [[context string] characterAtIndex:curIndex];
-		if ([legalChars characterIsMember:character]) {
-			// Are we working with a potential start character?
-			if ([startChars characterIsMember:character]) {
-				// Grab our previous character if we can
-				if (curIndex > 0) {
-					nextchar = [[context string] characterAtIndex:curIndex - 1];
-				}
-				// Set our lastStarCharIndex if the previous character means this could be a start character
-				if (curIndex == 0 || [whitespaceChars characterIsMember:nextchar] || [punctuationChars characterIsMember:nextchar]) {
-					lastStartCharIndex = curIndex;
-					// If the previous character is a prefix, switch to using it instead
-					if (curIndex > 0 && [prefixChars characterIsMember:nextchar]) {
-						lastStartCharIndex--;
-					}
-				}
-			}
-		} else {
-			// Not a legal character, so break out of our loop
-			break;
-		}
-	}
-
-	// Get setup for parsing to the right
-	NSUInteger lastEndCharIndex = index;
-	NSUInteger maxindex = [[context string] length] - 1;
-	curIndex = index;
-	BOOL prevCharWasBoundary = NO;
-	if (lastStartCharIndex == index) {
-		// There was nothing prior to the index that might have been a number, so we are at a boundary
-		prevCharWasBoundary = YES;
-	}
-	while (curIndex <= maxindex) {
-		character = [[context string] characterAtIndex:curIndex];
-		if ([legalChars characterIsMember:character]) {
-			if ([spaceChars characterIsMember:character] || [punctuationChars characterIsMember:character]) {
-				// We track boundaries so that we can ensure that we have a start character when we run into it
-				prevCharWasBoundary = YES;
-			} else if (prevCharWasBoundary && ![startChars characterIsMember:character]) {
-				// We are moving from a boundary character to a non-legal start character; break out of our loop
-				break;
-			} else if (prevCharWasBoundary && [startChars characterIsMember:character]) {
-				// Moving into a legal number, so reset our character boundary watcher
-				prevCharWasBoundary = NO;
-			} else if ([endChars characterIsMember:character]) {
-				// Grab our next character if we can
-				if (curIndex < maxindex) {
-					nextchar = [[context string] characterAtIndex:curIndex + 1];
-				}
-				// Set our lastEndCharIndex if the next character means this could be an end character
-				if (curIndex == maxindex || [whitespaceChars characterIsMember:nextchar] || [punctuationChars characterIsMember:nextchar]) {
-					lastEndCharIndex = curIndex;
-					// If the next character is a suffix, switch to using it instead
-					if (curIndex < maxindex && [suffixChars characterIsMember:nextchar]) {
-						lastEndCharIndex++;
-					}
-				}
-			}
-		} else {
-			// Not a legal character, so break out
-			break;
-		}
-		// Increment our index
-		curIndex++;
-	}
-
-	// If we have a range between our lastStartChar and lastEndChar, construct the selection
-	if (lastStartCharIndex < lastEndCharIndex) {
-		[context setSelectedRanges:[NSArray arrayWithObjects:[NSValue valueWithRange:NSMakeRange(lastStartCharIndex, lastEndCharIndex - lastStartCharIndex)], nil]];
-	}
-
-	// Release our mutable copied character sets
-	[legalChars release];
-	[startChars release];
 }
 
 @end
