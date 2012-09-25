@@ -50,10 +50,10 @@
 		NSRange range;
 		NSString *number = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%"] range:&range];
 		if ([[number matchesForExpression:singleNumberRE] count] > 0) {
-			return @"@single";
+			return @"@number-single";
 		}
 	} else {
-		return @"@selection";
+		return @"@number-selection";
 	}
 	return nil;
 }

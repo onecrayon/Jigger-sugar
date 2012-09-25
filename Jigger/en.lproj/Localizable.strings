@@ -1,1 +1,7 @@
-"com.onecrayon.sugar.jigger.jigger-action.title" = "Jigger";
+// Categories
+"actions.jigger.title" = "Jigger";
+
+// Actions
+"com.onecrayon.sugar.jigger.jigger-action.title" = "Insert Color or Number...";
+"com.onecrayon.sugar.jigger.jigger-action.title.number-single" = "Calculate With Number...";
+"com.onecrayon.sugar.jigger.jigger-action.title.number-selection" = "Calculate With Numbers...";

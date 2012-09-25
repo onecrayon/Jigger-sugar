@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <action-recipes>
 
-	<action id="com.onecrayon.sugar.jigger.jigger-action" category="">
+	<action id="com.onecrayon.sugar.jigger.jigger-action" category="actions.jigger">
 		<class>OCJiggerCalculatorAction</class>
 		<key-equivalent>command =</key-equivalent>
 		<when-disabled>show</when-disabled>
