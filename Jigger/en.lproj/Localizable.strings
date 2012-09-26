@@ -3,9 +3,8 @@
 
 // Actions
 "com.onecrayon.sugar.jigger.jigger-action.title" = "Insert Color or Number...";
-"com.onecrayon.sugar.jigger.jigger-action.title.single" = "Modify Color or Number...";
 "com.onecrayon.sugar.jigger.jigger-action.title.number-single" = "Calculate With Number...";
 "com.onecrayon.sugar.jigger.jigger-action.title.color-single" = "Modify Color...";
-"com.onecrayon.sugar.jigger.jigger-action.title.selection" = "Modify Colors or Numbers...";
+"com.onecrayon.sugar.jigger.jigger-action.title.selection" = "Modify Colors and Numbers...";
 "com.onecrayon.sugar.jigger.jigger-action.title.number-selection" = "Calculate With Numbers...";
 "com.onecrayon.sugar.jigger.jigger-action.title.color-selection" = "Modify Colors...";

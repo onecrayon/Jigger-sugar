@@ -16,8 +16,11 @@
 @implementation OCJiggerAction
 
 @synthesize customSheet;
+@synthesize calcView;
+@synthesize colorView;
 @synthesize calcField;
-@synthesize tabView;
+@synthesize colorField;
+@synthesize dividerLine;
 
 - (id)init {
 	self = [super init];
@@ -25,7 +28,7 @@
 		NSString *numberRE = @"-?\\$?(?:\\.\\d+|\\d[\\d.]*)(?:[a-zA-Z]*|%?)";
 		singleNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", numberRE]];
 		selNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", numberRE]];
-		NSString *colorRE = @"#\\h{3,6}";
+		NSString *colorRE = @"#(\\h{3}|\\h{6})";
 		singleColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", colorRE]];
 		selColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", colorRE]];
 		numberRanges = [[NSMutableArray alloc] init];
@@ -43,12 +46,13 @@
 	MRRelease(selColorRE);
 	MRRelease(numberRanges);
 	MRRelease(colorRanges);
-	MRRelease(startValue);
 	MRRelease(myContext);
 	MRRelease(customSheet);
-	MRRelease(colorPanel);
+	MRRelease(calcView);
+	MRRelease(colorView);
 	MRRelease(calcField);
-	MRRelease(tabView);
+	MRRelease(colorField);
+	MRRelease(dividerLine);
 	[super dealloc];
 }
 
@@ -63,12 +67,10 @@
 		NSString *number = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&range];
 		NSArray *numberMatches = [number matchesForExpression:singleNumberRE];
 		NSArray *colorMatches = [number matchesForExpression:singleColorRE];
-		if ([numberMatches count] > 0 && [colorMatches count] > 0) {
-			return @"single";
-		} else if ([numberMatches count] > 0) {
+		if ([numberMatches count] > 0) {
 			return @"@number-single";
 		} else if ([colorMatches count] > 0) {
-			return @"color-single";
+			return @"@color-single";
 		}
 	} else {
 		NSString *sel = [[context string] substringWithRange:firstRange];
@@ -79,7 +81,7 @@
 		} else if ([numbersMatches count] > 0) {
 			return @"@number-selection";
 		} else if ([colorsMatches count] > 0) {
-			return @"color-selection";
+			return @"@color-selection";
 		}
 	}
 	return nil;
@@ -88,7 +90,7 @@
 - (BOOL)performActionWithContext:(id)context error:(NSError **)outError {
 	// Grab our range and figure out what we are working with
 	NSRange range = [[[context selectedRanges] objectAtIndex:0] rangeValue];
-	startValue = @"";
+	NSString *startValue = @"";
 	[numberRanges removeAllObjects];
 	[colorRanges removeAllObjects];
 	targetRange = NSMakeRange(NSNotFound, 0);
@@ -130,85 +132,178 @@
 			return NO;
 		}
 	}
+	
+	// Load in our GUI
+	if (!customSheet) {
+		[NSBundle loadNibNamed:@"OCJiggerSheet" owner:self];
+		[calcField setDelegate:self];
+		// Set our tokenizing character to something they are unlikely to ever use
+		[calcField setTokenizingCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
+	}
 
-	// We only don't need the GUI if the only thing available to modify is a color (since then we can just load the color panel)
 	if ([numberRanges count] == 0 && [colorRanges count] > 0) {
+		// The only thing available to modify is a color
 		// Grab our first color if we don't have a startValue already
 		if (MRIsEmptyString(startValue)) {
 			startValue = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
 		}
 		// Enable our color modification mode
-		[self activateColorMode:self];
+		[self showMode:OCJiggerColorMode hideOthers:YES];
+		[self configureColorMode:startValue];
+	} else if ([numberRanges count] > 0 && [colorRanges count] == 0) {
+		// We only have numbers to work with
+		// Make sure we have a placeholder string
+		if (MRIsEmptyString(startValue)) {
+			if ([numberRanges count] == 1) {
+				startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
+			} else if ([numberRanges count] > 1) {
+				startValue = @"##";
+			}
+		}
+		// Enable calculation mode
+		[self showMode:OCJiggerCalculateMode hideOthers:YES];
+		[self configureCalculateMode:startValue];
 	} else {
-		if (!customSheet) {
-			[NSBundle loadNibNamed:@"OCJiggerCalculatorSheet" owner:self];
-			[calcField setDelegate:self];
-			// Set our tokenizing character to something they are unlikely to ever use
-			[calcField setTokenizingCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
-		}
-		
-		// Immediately display the calculation controls if we only have numbers to work with
-		if ([numberRanges count] > 0 && [colorRanges count] == 0) {
-			// Enable calculation mode
-			[self activateCalculateMode:self];
+		// We either are adjusting both colors and numbers, or are inserting something (so display both and they can chose)
+		[self showMode:OCJiggerCalculateMode hideOthers:NO];
+		[self showMode:OCJiggerColorMode hideOthers:NO];
+		// Configure our start values
+		if (range.length == 0) {
+			if ([numberRanges count] == 1) {
+				[self configureCalculateMode:startValue];
+			} else if ([colorRanges count] == 1) {
+				[self configureColorMode:startValue];
+			} else {
+				[self configureCalculateMode:@""];
+				[self configureColorMode:@""];
+			}
 		} else {
-			[tabView selectTabViewItemAtIndex:0];
+			if ([numberRanges count] > 0) {
+				if ([numberRanges count] == 1) {
+					startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
+				} else if ([numberRanges count] > 1) {
+					startValue = @"##";
+				}
+				[self configureCalculateMode:startValue];
+			} else {
+				[self configureCalculateMode:@""];
+			}
+			if ([colorRanges count] > 0) {
+				startValue = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
+				[self configureColorMode:startValue];
+			} else {
+				[self configureColorMode:@""];
+			}
 		}
-		
-		// Display the sheet
-		[NSApp beginSheet:customSheet
-		   modalForWindow:[context windowForSheet]
-			modalDelegate:self
-		   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
-			  contextInfo:nil
-		 ];
 	}
-	// Save our context and startValue for later
+	
+	// Display the sheet
+	[NSApp beginSheet:customSheet
+	   modalForWindow:[context windowForSheet]
+		modalDelegate:self
+	   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+		  contextInfo:nil
+	 ];
+	
+	// Save our context for later
 	myContext = [context retain];
-	[startValue retain];
 	// Exit the action now that control has been passed to the sheet
 	return YES;
 }
 
-- (IBAction)activateColorMode:(id)sender
+- (void)showMode:(OCJiggerMode)mode hideOthers:(BOOL)hideFlag
 {
-	// Close this sheet if is open
-	if ([[myContext windowForSheet] attachedSheet] != nil) {
-		[self cancel:self];
+	// Toggle the alternate mode closed if we are only showing one
+	NSRect newFrame = [customSheet frame];
+	NSRect colorFrame = [colorView frame];
+	if (hideFlag) {
+		if (mode == OCJiggerCalculateMode) {
+			if ([calcView isHidden] && ![colorView isHidden]) {
+				// Since colorView was shown and calcView hidden, we need to adjust colorView's Y coordinate back
+				colorFrame.origin.y = colorFrame.origin.y - [calcView frame].size.height;
+			}
+			if ([calcView isHidden]) {
+				newFrame.size.height = newFrame.size.height + [calcView frame].size.height;
+				[calcView setHidden:NO];
+			}
+			if (![colorView isHidden]) {
+				newFrame.size.height = newFrame.size.height - [colorView frame].size.height;
+				[colorView setHidden:YES];
+			}
+		} else if (mode == OCJiggerColorMode) {
+			if (![calcView isHidden]) {
+				// Since we are showing colorView and calcView was previously shown, we need to adjust colorView's Y coordinate
+				colorFrame.origin.y = colorFrame.origin.y + [calcView frame].size.height;
+			}
+			if ([colorView isHidden]) {
+				newFrame.size.height = newFrame.size.height + [colorView frame].size.height;
+				[colorView setHidden:NO];
+			}
+			if (![calcView isHidden]) {
+				newFrame.size.height = newFrame.size.height - [calcView frame].size.height;
+				[calcView setHidden:YES];
+			}
+			[dividerLine setHidden:YES];
+		}
+	} else {
+		if ([calcView isHidden] && ![colorView isHidden]) {
+			// Since colorView was shown and calcView hidden, we need to adjust colorView's Y coordinate back
+			colorFrame.origin.y = colorFrame.origin.y - [calcView frame].size.height;
+		}
+		if ([calcView isHidden]) {
+			newFrame.size.height = newFrame.size.height + [calcView frame].size.height;
+			[calcView setHidden:NO];
+		}
+		if ([colorView isHidden]) {
+			newFrame.size.height = newFrame.size.height + [colorView frame].size.height;
+			[colorView setHidden:NO];
+		}
+		[dividerLine setHidden:NO];
 	}
-	
-	colorPanel = [[NSColorPanel sharedColorPanel] retain];
-	[colorPanel setContinuous:YES];
-	// TODO: display the color palette modally, link up the action, and automatically insert colors when they change
+	[colorView setFrame:colorFrame];
+	[customSheet setFrame:newFrame display:YES];
 }
 
-- (IBAction)activateCalculateMode:(id)sender
+- (void)configureCalculateMode:(NSString *)startValue
 {
-	[tabView selectTabViewItemAtIndex:1];
-	// Make sure we have a placeholder string
-	if (MRIsEmptyString(startValue)) {
-		// No need to retain startValue here since we only need to use it the once at this point
-		if ([numberRanges count] == 1) {
-			[startValue release];
-			startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
-		} else if ([numberRanges count] > 1) {
-			[startValue release];
-			startValue = @"##";
-		}
-	}
-	
-	// If we are working with a targetRange, then that means we are inserting something; stick it in our numberRanges array
-	if (targetRange.location != NSNotFound) {
-		[numberRanges addObject:[NSValue valueWithRange:targetRange]];
-	}
-	
 	// Stick in the placeholder number or tag
 	[calcField setStringValue:startValue];
 	// Set the selection so that our cursor is at the end of the field
 	[customSheet makeFirstResponder:calcField];
 	NSText *fieldEditor = [customSheet fieldEditor:YES forObject:calcField];
 	[fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
+}
+
+- (void)configureColorMode:(NSString *)startValue
+{
+	NSColor *color;
+	if (MRIsEmptyString(startValue)) {
+		color = [NSColor whiteColor];
+	} else {
+		// Hex to color logic thanks to <http://mobiledevelopertips.com/general/using-nsscanner-to-convert-hex-to-rgb-color.html>
+		// Separate into r, g, b substrings
+		BOOL isShort = ([startValue length] == 4 ? YES : NO);
+		NSRange range = NSMakeRange(1, (isShort ? 1 : 2));
+		
+		NSString *rString = [startValue substringWithRange:range];
+		
+		range.location = range.location + (isShort ? 1 : 2);
+		NSString *gString = [startValue substringWithRange:range];
+		
+		range.location = range.location + (isShort ? 1 : 2);
+		NSString *bString = [startValue substringWithRange:range];
+		
+		// Scan values
+		unsigned int r, g, b;
+		[[NSScanner scannerWithString:rString] scanHexInt:&r];
+		[[NSScanner scannerWithString:gString] scanHexInt:&g];  
+		[[NSScanner scannerWithString:bString] scanHexInt:&b];
+		
+		color = [NSColor colorWithCalibratedRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+	}
 	
+	// Set our default color
+	[colorField setColor:color];
 }
 
 - (IBAction)doSubmitSheet:(id)sender {
@@ -221,6 +316,9 @@
 
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
 	if (returnCode == 1) {
+		// TODO: add color processing logic (and ignore number processing if we only have colors)
+		// TODO: track if we changed color/calculation in order to avoid making changes if both are open but one is not modified
+		
 		// Grab our shared calculation string
 		NSString *rootCalculation = [[calcField objectValue] componentsJoinedByString:@""];
 		// Prep our recipe
@@ -282,6 +380,7 @@
 		// Release variables
 		[currencyFormatter release];
 	}
+	
 	// Get rid of our sheet
 	[sheet orderOut:self];
 }

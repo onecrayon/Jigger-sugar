@@ -10,6 +10,13 @@
 #import <MRRegularExpressionAdditions.h>
 
 
+// Enum for tracking modes
+typedef enum {
+    OCJiggerCalculateMode = 1,
+    OCJiggerColorMode = 2
+} OCJiggerMode;
+
+
 @interface OCJiggerAction : NSObject <NSTokenFieldDelegate> {
 @private
 	MRRegularExpression *singleNumberRE;
@@ -19,20 +26,25 @@
 	NSMutableArray *numberRanges;
 	NSMutableArray *colorRanges;
 	NSRange targetRange;
-	NSString *startValue;
 	id myContext;
-	NSColorPanel *colorPanel;
 	NSWindow *customSheet;
+	NSView *calcView;
+	NSView *colorView;
 	NSTokenField *calcField;
-	NSTabView *tabView;
+	NSColorWell *colorField;
+	NSBox *dividerLine;
 }
 
 @property(retain) IBOutlet NSWindow *customSheet;
+@property(retain) IBOutlet NSView *calcView;
+@property(retain) IBOutlet NSView *colorView;
 @property(retain) IBOutlet NSTokenField *calcField;
-@property(retain) IBOutlet NSTabView *tabView;
+@property(retain) IBOutlet NSColorWell *colorField;
+@property(retain) IBOutlet NSBox *dividerLine;
 
-- (IBAction)activateColorMode:(id)sender;
-- (IBAction)activateCalculateMode:(id)sender;
+- (void)showMode:(OCJiggerMode)mode hideOthers:(BOOL)hideFlag;
+- (void)configureCalculateMode:(NSString *)startValue;
+- (void)configureColorMode:(NSString *)startValue;
 
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
