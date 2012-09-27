@@ -36,7 +36,7 @@
 	NSString *lineText;
 	
 	// Init non-pointer variables
-	NSUInteger maxindex = [[self string] length] - 1;
+	NSInteger maxindex = [[self string] length] - 1;
 	unichar character;
 	BOOL inword;
 	NSInteger index = (NSInteger)cursor;
