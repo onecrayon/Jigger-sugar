@@ -46,6 +46,8 @@
 	MRRelease(selColorRE);
 	MRRelease(numberRanges);
 	MRRelease(colorRanges);
+	MRRelease(originalNumber);
+	MRRelease(originalColor);
 	MRRelease(myContext);
 	MRRelease(customSheet);
 	MRRelease(calcView);
@@ -90,7 +92,10 @@
 - (BOOL)performActionWithContext:(id)context error:(NSError **)outError {
 	// Grab our range and figure out what we are working with
 	NSRange range = [[[context selectedRanges] objectAtIndex:0] rangeValue];
-	NSString *startValue = @"";
+	[originalNumber release];
+	originalNumber = @"";
+	[originalColor release];
+	originalColor = @"";
 	[numberRanges removeAllObjects];
 	[colorRanges removeAllObjects];
 	targetRange = NSMakeRange(NSNotFound, 0);
@@ -99,11 +104,11 @@
 		NSRange numberRange;
 		NSString *number = [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&numberRange];
 		if ([[number matchesForExpression:singleNumberRE] count] > 0) {
-			startValue = number;
+			originalNumber = number;
 			[numberRanges addObject:[NSValue valueWithRange:numberRange]];
 		}
 		if ([[number matchesForExpression:singleColorRE] count] > 0) {
-			startValue = number;
+			originalColor = number;
 			[colorRanges addObject:[NSValue valueWithRange:numberRange]];
 		}
 		
@@ -144,56 +149,47 @@
 	if ([numberRanges count] == 0 && [colorRanges count] > 0) {
 		// The only thing available to modify is a color
 		// Grab our first color if we don't have a startValue already
-		if (MRIsEmptyString(startValue)) {
-			startValue = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
+		if (MRIsEmptyString(originalColor)) {
+			originalColor = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
 		}
 		// Enable our color modification mode
 		[self showMode:OCJiggerColorMode hideOthers:YES];
-		[self configureColorMode:startValue];
+		[self configureColorMode:originalColor];
 	} else if ([numberRanges count] > 0 && [colorRanges count] == 0) {
 		// We only have numbers to work with
 		// Make sure we have a placeholder string
-		if (MRIsEmptyString(startValue)) {
+		if (MRIsEmptyString(originalNumber)) {
 			if ([numberRanges count] == 1) {
-				startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
+				originalNumber = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
 			} else if ([numberRanges count] > 1) {
-				startValue = @"##";
+				originalNumber = @"##";
 			}
 		}
 		// Enable calculation mode
 		[self showMode:OCJiggerCalculateMode hideOthers:YES];
-		[self configureCalculateMode:startValue];
+		[self configureCalculateMode:originalNumber];
 	} else {
 		// We either are adjusting both colors and numbers, or are inserting something (so display both and they can chose)
 		[self showMode:OCJiggerCalculateMode hideOthers:NO];
 		[self showMode:OCJiggerColorMode hideOthers:NO];
 		// Configure our start values
 		if (range.length == 0) {
-			if ([numberRanges count] == 1) {
-				[self configureCalculateMode:startValue];
-			} else if ([colorRanges count] == 1) {
-				[self configureColorMode:startValue];
-			} else {
-				[self configureCalculateMode:@""];
-				[self configureColorMode:@""];
-			}
+			[self configureCalculateMode:originalNumber];
+			[self configureColorMode:originalColor];
 		} else {
 			if ([numberRanges count] > 0) {
 				if ([numberRanges count] == 1) {
-					startValue = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
+					originalNumber = [[myContext string] substringWithRange:[[numberRanges objectAtIndex:0] rangeValue]];
 				} else if ([numberRanges count] > 1) {
-					startValue = @"##";
+					originalNumber = @"##";
 				}
-				[self configureCalculateMode:startValue];
-			} else {
-				[self configureCalculateMode:@""];
+				
 			}
+			[self configureCalculateMode:originalNumber];
 			if ([colorRanges count] > 0) {
-				startValue = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
-				[self configureColorMode:startValue];
-			} else {
-				[self configureColorMode:@""];
+				originalColor = [[context string] substringWithRange:[[colorRanges objectAtIndex:0] rangeValue]];
 			}
+			[self configureColorMode:originalColor];
 		}
 	}
 	
@@ -205,8 +201,14 @@
 		  contextInfo:nil
 	 ];
 	
-	// Save our context for later
+	// Save our context and original values for later
 	myContext = [context retain];
+	[originalNumber retain];
+	// Make sure that we have an accurate color
+	if (MRIsEmptyString(originalColor)) {
+		originalColor = [self chosenHexColor];
+	}
+	[originalColor retain];
 	// Exit the action now that control has been passed to the sheet
 	return YES;
 }
@@ -306,6 +308,21 @@
 	[colorField setColor:color];
 }
 
+- (NSString *)chosenHexColor
+{
+	NSColor *color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	return [NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)];
+}
+
+- (NSString *)shortestHexCodeWithHex:(NSString *)hexCode
+{
+	if ([hexCode characterAtIndex:1] == [hexCode characterAtIndex:2] && [hexCode characterAtIndex:3] == [hexCode characterAtIndex:4] && [hexCode characterAtIndex:5] == [hexCode characterAtIndex:6]) {
+		return [NSString stringWithFormat:@"#%c%c%c", [hexCode characterAtIndex:1], [hexCode characterAtIndex:3], [hexCode characterAtIndex:5]];
+	} else {
+		return hexCode;
+	}
+}
+
 - (IBAction)doSubmitSheet:(id)sender {
 	[NSApp endSheet:customSheet returnCode:1];
 }
@@ -321,64 +338,93 @@
 		
 		// Grab our shared calculation string
 		NSString *rootCalculation = [[calcField objectValue] componentsJoinedByString:@""];
+		// Grab our final color
+		NSString *chosenColor = [self chosenHexColor];
 		// Prep our recipe
 		CETextRecipe *recipe = [CETextRecipe textRecipe];
-		// Loop over our ranges and perform the calculations
+		// Init shared variables
 		NSRange range;
-		NSMutableString *calculation;
-		NSNumber *total;
-		NSString *totalStr;
-		MRRegularExpression *moneyRE = [MRRegularExpression expressionWithString:@"\\$(\\d[\\d,]*(?:\\.\\d{0,2}))"];
-		MRRegularExpression *suffixRE = [MRRegularExpression expressionWithString:@"(\\d+)([a-zA-Z]+)"];
-		NSArray *matches;
-		BOOL dollarOutput;
-		NSString *suffix;
-		// Configure currency output
-		NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
-		[currencyFormatter setPositiveFormat:@"¤#0.00"];
-		[currencyFormatter setNegativeFormat:@"-¤#0.00"];
-		[currencyFormatter setCurrencySymbol:@"$"];
-		for (NSValue *value in numberRanges) {
-			// Grab our range, and determine our calculation
-			range = [value rangeValue];
-			calculation = [[rootCalculation stringByReplacingOccurrencesOfString:@"##" withString:[[myContext string] substringWithRange:range]] mutableCopy];
-			// Clean up dollars and suffixes from our calculation
-			// Check to see if we have any monetary values (output a dollar value if so)
-			dollarOutput = NO;
-			if ([[calculation matchesForExpression:moneyRE] count] > 0) {
-				dollarOutput = YES;
-				// Remove dollar signs for monetary values (since dollar is used as variable by DDMathParser)
-				[calculation replaceOccurrencesOfExpression:moneyRE withExpression:[MRReplaceExpression expressionWithString:@"$1"]];
+		if (([numberRanges count] > 0 || targetRange.location != NSNotFound) && ![rootCalculation isEqualToString:originalNumber]) {
+			// We have a number to insert, so loop over our ranges and perform the calculations
+			NSMutableString *calculation;
+			NSNumber *total;
+			NSString *totalStr;
+			MRRegularExpression *moneyRE = [MRRegularExpression expressionWithString:@"\\$(\\d[\\d,]*(?:\\.\\d{0,2}))"];
+			MRRegularExpression *suffixRE = [MRRegularExpression expressionWithString:@"(\\d+)([a-zA-Z]+)"];
+			NSArray *matches;
+			BOOL dollarOutput;
+			NSString *suffix;
+			// Configure currency output
+			NSNumberFormatter *currencyFormatter = [[NSNumberFormatter alloc] init];
+			[currencyFormatter setPositiveFormat:@"¤#0.00"];
+			[currencyFormatter setNegativeFormat:@"-¤#0.00"];
+			[currencyFormatter setCurrencySymbol:@"$"];
+			// Check to see if we are inserting a value
+			if (targetRange.location != NSNotFound) {
+				[numberRanges addObject:[NSValue valueWithRange:targetRange]];
 			}
-			// Check to see if we have any suffixes
-			suffix = @"";
-			matches = [calculation matchesForExpression:suffixRE];
-			if ([matches count] > 0) {
-				// Grab the last suffix for appending after we calculate everything out
-				suffix = [[matches objectAtIndex:([matches count] - 1)] substringWithTag:2];
-				// Remove all suffixes to prevent screwing up DDMathParser
-				[calculation replaceOccurrencesOfExpression:suffixRE withExpression:[MRReplaceExpression expressionWithString:@"$1"]];
+			for (NSValue *value in numberRanges) {
+				// Grab our range, and determine our calculation
+				range = [value rangeValue];
+				calculation = [[rootCalculation stringByReplacingOccurrencesOfString:@"##" withString:[[myContext string] substringWithRange:range]] mutableCopy];
+				// Clean up dollars and suffixes from our calculation
+				// Check to see if we have any monetary values (output a dollar value if so)
+				dollarOutput = NO;
+				if ([[calculation matchesForExpression:moneyRE] count] > 0) {
+					dollarOutput = YES;
+					// Remove dollar signs for monetary values (since dollar is used as variable by DDMathParser)
+					[calculation replaceOccurrencesOfExpression:moneyRE withExpression:[MRReplaceExpression expressionWithString:@"$1"]];
+				}
+				// Check to see if we have any suffixes
+				suffix = @"";
+				matches = [calculation matchesForExpression:suffixRE];
+				if ([matches count] > 0) {
+					// Grab the last suffix for appending after we calculate everything out
+					suffix = [[matches objectAtIndex:([matches count] - 1)] substringWithTag:2];
+					// Remove all suffixes to prevent screwing up DDMathParser
+					[calculation replaceOccurrencesOfExpression:suffixRE withExpression:[MRReplaceExpression expressionWithString:@"$1"]];
+				}
+				// Calculate using DDMathParser
+				total = [calculation numberByEvaluatingString];
+				// If we are working with dollars, convert to dollars
+				if (dollarOutput) {
+					totalStr = [currencyFormatter stringFromNumber:total];
+				} else if ([suffix length] > 0) {
+					totalStr = [NSString stringWithFormat:@"%@%@", [total stringValue], suffix];
+				} else {
+					totalStr = [total stringValue];
+				}
+				if ([totalStr length] > 0) {
+					[recipe replaceRange:range withString:totalStr];
+				}
+				// Release mutable copied calculation string
+				[calculation release];
 			}
-			// Calculate using DDMathParser
-			total = [calculation numberByEvaluatingString];
-			// If we are working with dollars, convert to dollars
-			if (dollarOutput) {
-				totalStr = [currencyFormatter stringFromNumber:total];
-			} else if ([suffix length] > 0) {
-				totalStr = [NSString stringWithFormat:@"%@%@", [total stringValue], suffix];
-			} else {
-				totalStr = [total stringValue];
-			}
-			if ([totalStr length] > 0) {
-				[recipe replaceRange:range withString:totalStr];
-			}
-			// Release mutable copied calculation string
-			[calculation release];
+			// Release variables
+			[currencyFormatter release];
 		}
+		
+		// Now that we've processed numbers, check for colors
+		if (([colorRanges count] > 0 || targetRange.location != NSNotFound) && (![[chosenColor lowercaseString] isEqualToString:[originalColor lowercaseString]] && ![[[self shortestHexCodeWithHex:chosenColor] lowercaseString] isEqualToString:[originalColor lowercaseString]])) {
+			// Make sure we insert the smallest string possible
+			chosenColor = [self shortestHexCodeWithHex:chosenColor];
+			// Check to see if we are inserting from a targetRange
+			if (targetRange.location != NSNotFound) {
+				[colorRanges addObject:[NSValue valueWithRange:targetRange]];
+			}
+			for (NSValue *value in colorRanges) {
+				range = [value rangeValue];
+				if (targetRange.location != NSNotFound && ![rootCalculation isEqualToString:originalNumber]) {
+					// We have already inserted a number, so prepend a space to the color
+					[recipe insertString:[NSString stringWithFormat:@" %@", chosenColor] atIndex:range.location];
+				} else {
+					[recipe replaceRange:range withString:chosenColor];
+				}
+			}
+		}
+		
 		// Apply our text recipe
 		[myContext applyTextRecipe:recipe];
-		// Release variables
-		[currencyFormatter release];
 	}
 	
 	// Get rid of our sheet

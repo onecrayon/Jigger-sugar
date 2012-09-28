@@ -26,6 +26,8 @@ typedef enum {
 	NSMutableArray *numberRanges;
 	NSMutableArray *colorRanges;
 	NSRange targetRange;
+	NSString *originalNumber;
+	NSString *originalColor;
 	id myContext;
 	NSWindow *customSheet;
 	NSView *calcView;
@@ -45,6 +47,10 @@ typedef enum {
 - (void)showMode:(OCJiggerMode)mode hideOthers:(BOOL)hideFlag;
 - (void)configureCalculateMode:(NSString *)startValue;
 - (void)configureColorMode:(NSString *)startValue;
+// Returns the six-digit hex code that the user has chosen
+- (NSString *)chosenHexColor;
+// Returns a three letter hex code using the passed in code, if possible (otherwise returns six letter code)
+- (NSString *)shortestHexCodeWithHex:(NSString *)hexCode;
 
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
