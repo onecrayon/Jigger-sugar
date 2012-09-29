@@ -280,29 +280,29 @@
 {
 	NSColor *color;
 	if (MRIsEmptyString(startValue)) {
-		color = [NSColor whiteColor];
-	} else {
-		// Hex to color logic thanks to <http://mobiledevelopertips.com/general/using-nsscanner-to-convert-hex-to-rgb-color.html>
-		// Separate into r, g, b substrings
-		BOOL isShort = ([startValue length] == 4 ? YES : NO);
-		NSRange range = NSMakeRange(1, (isShort ? 1 : 2));
-		
-		NSString *rString = [startValue substringWithRange:range];
-		
-		range.location = range.location + (isShort ? 1 : 2);
-		NSString *gString = [startValue substringWithRange:range];
-		
-		range.location = range.location + (isShort ? 1 : 2);
-		NSString *bString = [startValue substringWithRange:range];
-		
-		// Scan values
-		unsigned int r, g, b;
-		[[NSScanner scannerWithString:rString] scanHexInt:&r];
-		[[NSScanner scannerWithString:gString] scanHexInt:&g];  
-		[[NSScanner scannerWithString:bString] scanHexInt:&b];
-		
-		color = [NSColor colorWithCalibratedRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+		// Default to something just shy of black, so that they can select true black and insert it
+		startValue = @"#000101";
 	}
+	// Hex to color logic thanks to <http://mobiledevelopertips.com/general/using-nsscanner-to-convert-hex-to-rgb-color.html>
+	// Separate into r, g, b substrings
+	BOOL isShort = ([startValue length] == 4 ? YES : NO);
+	NSRange range = NSMakeRange(1, (isShort ? 1 : 2));
+	
+	NSString *rString = [startValue substringWithRange:range];
+	
+	range.location = range.location + (isShort ? 1 : 2);
+	NSString *gString = [startValue substringWithRange:range];
+	
+	range.location = range.location + (isShort ? 1 : 2);
+	NSString *bString = [startValue substringWithRange:range];
+	
+	// Scan values
+	unsigned int r, g, b;
+	[[NSScanner scannerWithString:rString] scanHexInt:&r];
+	[[NSScanner scannerWithString:gString] scanHexInt:&g];  
+	[[NSScanner scannerWithString:bString] scanHexInt:&b];
+	
+	color = [NSColor colorWithCalibratedRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
 	
 	// Set our default color
 	[colorField setColor:color];
@@ -333,9 +333,6 @@
 
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
 	if (returnCode == 1) {
-		// TODO: add color processing logic (and ignore number processing if we only have colors)
-		// TODO: track if we changed color/calculation in order to avoid making changes if both are open but one is not modified
-		
 		// Grab our shared calculation string
 		NSString *rootCalculation = [[calcField objectValue] componentsJoinedByString:@""];
 		// Grab our final color

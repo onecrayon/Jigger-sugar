@@ -10,6 +10,13 @@
 #import <MRRegularExpressionAdditions.h>
 
 
+/*
+ TODO:
+ - Add a "clear" button to the color controls
+ - Add a label for the color controls that shows a preview of the hex color (changing in real time?)
+ */
+
+
 // Enum for tracking modes
 typedef enum {
     OCJiggerCalculateMode = 1,
