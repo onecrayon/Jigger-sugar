@@ -1,11 +1,11 @@
 # Jigger.sugar
 
-Jigger.sugar adds an action to easily manipulate numbers and colors in [Espresso](http://macrabbit.com/espresso/). After installing it, use the shortcut `command =` to edit the number or CSS hex code under your cursor. If you have one or more selections when you use `command =`, all numbers and/or colors will be updated. If you have neither a color nor a number under your cursor, one will be inserted.
+Jigger.sugar adds an action to easily manipulate numbers and colors in [Espresso](http://macrabbit.com/espresso/). After installing it, use the shortcut `command =` to edit the number or CSS hex code under your cursor. If you have one or more selections when you use `command =`, all selected numbers and/or colors will be updated. If you have neither a color nor a number under your cursor, one will be inserted.
 
 **Calculations**
 
 * When modifying multiple numbers simultaneously, click the arrow next to the "number" token to see all numbers that will be affected by your calculation
-* If you append prefixes to your numbers, the last prefix will be used (`12px/16em` = 0.75em)
+* If you append prefixes to your numbers, the last prefix in the calculation will be used (`12px/16em` = 0.75em)
 * Currency calculations currently only support USD and round to the nearest cent (`$3.99/4` = $1.00)
 * You can use the following operators: add (`2+2` = 4), subtract (`2-2` = 0), multiply (`2*2` = 4), divide (`2/2` = 1), factorial (`4!` = 24), exponentiation (`2**3` = 8), and percentages (`2+20%` = 2.4)
 * You can also use the following functions: 
@@ -21,9 +21,9 @@ Calculations also support other lesser-used [operators](https://github.com/daved
 
 **Colors**
 
-* If you are editing multiple colors, only the first one will be shown in the GUI but all of them will be updated to whatever color you select
-* Only CSS hex colors are currently supported, but both three character and six character hexes will work
-* When inserting a hex color, it will insert the three character variant, if possible (so `#FFF` instead of `#FFFFFF`)
+* If you are editing multiple colors, only the first one will be shown in the GUI but all of them will be changed to whatever color you select
+* Only CSS hex colors are currently supported
+* When inserting a hex color, it will insert the three character variant, if possible (so `#fff` instead of `#ffffff`)
 
 ## Installation
 
