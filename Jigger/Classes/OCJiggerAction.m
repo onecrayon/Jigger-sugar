@@ -20,6 +20,8 @@
 @synthesize colorView;
 @synthesize calcField;
 @synthesize colorField;
+@synthesize clearColorButton;
+@synthesize colorPreview;
 @synthesize dividerLine;
 
 - (id)init {
@@ -54,6 +56,8 @@
 	MRRelease(colorView);
 	MRRelease(calcField);
 	MRRelease(colorField);
+	MRRelease(clearColorButton);
+	MRRelease(colorPreview);
 	MRRelease(dividerLine);
 	[super dealloc];
 }
@@ -193,6 +197,10 @@
 		}
 	}
 	
+	// Configure the color preview and cancel button
+	[colorPreview setHidden:YES];
+	[clearColorButton setHidden:YES];
+	
 	// Display the sheet
 	[NSApp beginSheet:customSheet
 	   modalForWindow:[context windowForSheet]
@@ -320,6 +328,29 @@
 		return [NSString stringWithFormat:@"#%c%c%c", [hexCode characterAtIndex:1], [hexCode characterAtIndex:3], [hexCode characterAtIndex:5]];
 	} else {
 		return hexCode;
+	}
+}
+
+- (IBAction)clearColorWell:(id)sender
+{
+	// Reset color well to default color
+	[self configureColorMode:originalColor];
+	[self updateColorPreview:self];
+}
+
+- (IBAction)updateColorPreview:(id)sender
+{
+	// Update our preview text
+	NSString *chosenColor = [self chosenHexColor];
+	[colorPreview setStringValue:[self shortestHexCodeWithHex:chosenColor]];
+	if ([chosenColor isEqualToString:[originalColor lowercaseString]] || [[self shortestHexCodeWithHex:chosenColor] isEqualToString:[originalColor lowercaseString]]) {
+		// Since we are using the original color, hide our preview and clear button
+		[colorPreview setHidden:YES];
+		[clearColorButton setHidden:YES];
+	} else if ([colorPreview isHidden]) {
+		// Unhide preview and button if they were previously hidden
+		[colorPreview setHidden:NO];
+		[clearColorButton setHidden:NO];
 	}
 }
 

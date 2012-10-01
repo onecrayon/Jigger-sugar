@@ -10,13 +10,6 @@
 #import <MRRegularExpressionAdditions.h>
 
 
-/*
- TODO:
- - Add a "clear" button to the color controls
- - Add a label for the color controls that shows a preview of the hex color (changing in real time?)
- */
-
-
 // Enum for tracking modes
 typedef enum {
     OCJiggerCalculateMode = 1,
@@ -41,6 +34,8 @@ typedef enum {
 	NSView *colorView;
 	NSTokenField *calcField;
 	NSColorWell *colorField;
+	NSButton *clearColorButton;
+	NSTextField *colorPreview;
 	NSBox *dividerLine;
 }
 
@@ -49,6 +44,8 @@ typedef enum {
 @property(retain) IBOutlet NSView *colorView;
 @property(retain) IBOutlet NSTokenField *calcField;
 @property(retain) IBOutlet NSColorWell *colorField;
+@property(retain) IBOutlet NSButton *clearColorButton;
+@property(retain) IBOutlet NSTextField *colorPreview;
 @property(retain) IBOutlet NSBox *dividerLine;
 
 - (void)showMode:(OCJiggerMode)mode hideOthers:(BOOL)hideFlag;
@@ -59,6 +56,7 @@ typedef enum {
 // Returns a three letter hex code using the passed in code, if possible (otherwise returns six letter code)
 - (NSString *)shortestHexCodeWithHex:(NSString *)hexCode;
 
+- (IBAction)updateColorPreview:(id)sender;
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
