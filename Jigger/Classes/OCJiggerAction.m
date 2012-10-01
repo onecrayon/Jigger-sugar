@@ -27,7 +27,7 @@
 	if (self) {
 		NSString *numberRE = @"-?\\$?(?:\\.\\d+|\\d[\\d.]*)(?:[a-zA-Z]*|%?)";
 		singleNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", numberRE]];
-		selNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", numberRE]];
+		selNumberRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|(?<!#)\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", numberRE]];
 		NSString *colorRE = @"#(\\h{3}|\\h{6})";
 		singleColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", colorRE]];
 		selColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", colorRE]];
@@ -311,7 +311,7 @@
 - (NSString *)chosenHexColor
 {
 	NSColor *color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	return [NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)];
+	return [[NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)] lowercaseString];
 }
 
 - (NSString *)shortestHexCodeWithHex:(NSString *)hexCode
@@ -402,7 +402,7 @@
 		}
 		
 		// Now that we've processed numbers, check for colors
-		if (([colorRanges count] > 0 || targetRange.location != NSNotFound) && (![[chosenColor lowercaseString] isEqualToString:[originalColor lowercaseString]] && ![[[self shortestHexCodeWithHex:chosenColor] lowercaseString] isEqualToString:[originalColor lowercaseString]])) {
+		if (([colorRanges count] > 0 || targetRange.location != NSNotFound) && (![chosenColor isEqualToString:[originalColor lowercaseString]] && ![[self shortestHexCodeWithHex:chosenColor] isEqualToString:[originalColor lowercaseString]])) {
 			// Make sure we insert the smallest string possible
 			chosenColor = [self shortestHexCodeWithHex:chosenColor];
 			// Check to see if we are inserting from a targetRange
