@@ -37,6 +37,7 @@ typedef enum {
 	NSButton *clearColorButton;
 	NSTextField *colorPreview;
 	NSBox *dividerLine;
+	BOOL modifyAllFlag;
 }
 
 @property(retain) IBOutlet NSWindow *customSheet;

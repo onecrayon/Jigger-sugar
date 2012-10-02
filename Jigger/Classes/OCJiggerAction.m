@@ -24,7 +24,7 @@
 @synthesize colorPreview;
 @synthesize dividerLine;
 
-- (id)init {
+- (id)initWithDictionary:(NSDictionary *)dictionary bundlePath:(NSString *)bundlePath {
 	self = [super init];
 	if (self) {
 		NSString *numberRE = @"-?\\$?(?:\\.\\d+|\\d[\\d.]*)(?:[a-zA-Z]*|%?)";
@@ -35,6 +35,12 @@
 		selColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", colorRE]];
 		numberRanges = [[NSMutableArray alloc] init];
 		colorRanges = [[NSMutableArray alloc] init];
+		// Check to see if we are working with an "edit all" action
+		if ([dictionary objectForKey:@"target"] && [[[dictionary objectForKey:@"target"] lowercaseString] isEqualToString:@"all"]) {
+			modifyAllFlag = YES;
+		} else {
+			modifyAllFlag = NO;
+		}
 	}
 
 	return self;
@@ -63,39 +69,49 @@
 }
 
 - (BOOL)canPerformActionWithContext:(id)context {
+	if (modifyAllFlag) {
+		NSRange firstRange = [[[context selectedRanges] objectAtIndex:0] rangeValue];
+		NSRange range;
+		NSString *selText = (firstRange.length == 0 ? [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&range] : [[context string] substringWithRange:firstRange]);
+		NSArray *numberMatches = [selText matchesForExpression:singleNumberRE];
+		NSArray *colorMatches = [selText matchesForExpression:singleColorRE];
+		if ([colorMatches count] == 0 && [numberMatches count] == 0) {
+			return NO;
+		}
+	}
 	return YES;
 }
 
 - (NSString *)titleWithContext:(id)context {
 	NSRange firstRange = [[[context selectedRanges] objectAtIndex:0] rangeValue];
+	NSString *selText;
 	if (firstRange.length == 0) {
 		NSRange range;
-		NSString *number = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&range];
-		NSArray *numberMatches = [number matchesForExpression:singleNumberRE];
-		NSArray *colorMatches = [number matchesForExpression:singleColorRE];
-		if ([numberMatches count] > 0) {
-			return @"@number-single";
-		} else if ([colorMatches count] > 0) {
-			return @"@color-single";
-		}
+		selText = [context getWordAtCursor:firstRange.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&range];
 	} else {
-		NSString *sel = [[context string] substringWithRange:firstRange];
-		NSArray *numbersMatches = [sel matchesForExpression:selNumberRE];
-		NSArray *colorsMatches = [sel matchesForExpression:selColorRE];
-		if ([numbersMatches count] > 0 && [colorsMatches count] > 0) {
-			return @"@selection";
-		} else if ([numbersMatches count] > 0) {
-			return @"@number-selection";
-		} else if ([colorsMatches count] > 0) {
-			return @"@color-selection";
+		selText = [[context string] substringWithRange:firstRange];
+	}
+	NSArray *numberMatches = [selText matchesForExpression:singleNumberRE];
+	NSArray *colorMatches = [selText matchesForExpression:singleColorRE];
+	
+	if ([numberMatches count] > 0 && [colorMatches count] > 0 && firstRange.length > 0) {
+		return @"@selection";
+	} else if ([numberMatches count] > 0) {
+		if (modifyAllFlag) {
+			return @"@number-all";
 		}
+		return (firstRange.length == 0 ? @"@number-single" : @"number-selection");
+	} else if ([colorMatches count] > 0) {
+		if (modifyAllFlag) {
+			return @"@color-all";
+		}
+		return (firstRange.length == 0 ? @"@color-single" : @"@color-selection");
 	}
 	return nil;
 }
 
 - (BOOL)performActionWithContext:(id)context error:(NSError **)outError {
 	// Grab our range and figure out what we are working with
-	NSRange range = [[[context selectedRanges] objectAtIndex:0] rangeValue];
 	[originalNumber release];
 	originalNumber = @"";
 	[originalColor release];
@@ -103,22 +119,37 @@
 	[numberRanges removeAllObjects];
 	[colorRanges removeAllObjects];
 	targetRange = NSMakeRange(NSNotFound, 0);
-	if (range.length == 0) {
-		// No selection, so grab the number/color near the cursor if it exists
-		NSRange numberRange;
-		NSString *number = [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&numberRange];
-		if ([[number matchesForExpression:singleNumberRE] count] > 0) {
-			originalNumber = number;
-			[numberRanges addObject:[NSValue valueWithRange:numberRange]];
+	
+	NSRange range = [[[context selectedRanges] objectAtIndex:0] rangeValue];
+	NSString *target;
+	NSRange tempTargetRange;
+	
+	// If we are modifying all copies of a number or color, we need to find them all
+	if (modifyAllFlag) {
+		target = (range.length == 0 ? [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&tempTargetRange] : [[context string] substringWithRange:range]);
+		NSMutableArray *matchArray = ([[target matchesForExpression:singleNumberRE] count] > 0 ? numberRanges : colorRanges);
+		// Escape potentially problematic regex characters
+		target = [[target stringByReplacingOccurrencesOfString:@"$" withString:@"\\$"] stringByReplacingOccurrencesOfString:@"." withString:@"\\."];
+		NSArray *targetMatches = [[context string] matchesForExpression:[MRRegularExpression expressionWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", target]]];
+		// Populate our object that tracks the ranges we need to replace
+		for (MRRegularExpressionMatch *match in targetMatches) {
+			[matchArray addObject:[NSValue valueWithRange:[match range]]];
 		}
-		if ([[number matchesForExpression:singleColorRE] count] > 0) {
-			originalColor = number;
-			[colorRanges addObject:[NSValue valueWithRange:numberRange]];
+	} else if (range.length == 0) {
+		// No selection, so grab the number/color near the cursor if it exists
+		target = [context getWordAtCursor:range.location allowExtraCharacters:[NSCharacterSet characterSetWithCharactersInString:@"$-.%#"] range:&tempTargetRange];
+		if ([[target matchesForExpression:singleNumberRE] count] > 0) {
+			originalNumber = target;
+			[numberRanges addObject:[NSValue valueWithRange:tempTargetRange]];
+		}
+		if ([[target matchesForExpression:singleColorRE] count] > 0) {
+			originalColor = target;
+			[colorRanges addObject:[NSValue valueWithRange:tempTargetRange]];
 		}
 		
 		// If we don't have a color or number, then we are inserting a new one at the cursor
 		if ([numberRanges count] == 0 && [colorRanges count] == 0) {
-			targetRange = range;
+			targetRange = tempTargetRange;
 		}
 	} else {
 		// Find our target ranges
