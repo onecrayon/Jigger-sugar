@@ -378,10 +378,18 @@
 		// Since we are using the original color, hide our preview and clear button
 		[colorPreview setHidden:YES];
 		[clearColorButton setHidden:YES];
+		if (targetRange.location != NSNotFound) {
+			// We are working with an insert, so activate the calculation controls (we toggle them back and forth to ensure that only one thing can be inserted at a time)
+			[calcField setEnabled:YES];
+		}
 	} else if ([colorPreview isHidden]) {
 		// Unhide preview and button if they were previously hidden
 		[colorPreview setHidden:NO];
 		[clearColorButton setHidden:NO];
+		// Disable the calcuation controls if we are inserting something
+		if (targetRange.location != NSNotFound) {
+			[calcField setEnabled:NO];
+		}
 	}
 }
 
@@ -473,12 +481,7 @@
 			}
 			for (NSValue *value in colorRanges) {
 				range = [value rangeValue];
-				if (targetRange.location != NSNotFound && ![rootCalculation isEqualToString:originalNumber]) {
-					// We have already inserted a number, so prepend a space to the color
-					[recipe insertString:[NSString stringWithFormat:@" %@", chosenColor] atIndex:range.location];
-				} else {
-					[recipe replaceRange:range withString:chosenColor];
-				}
+				[recipe replaceRange:range withString:chosenColor];
 			}
 		}
 		
@@ -561,6 +564,18 @@
 		return YES;
 	}
 	return NO;
+}
+
+// Update the enabled state of the other controls if we are inserting something
+- (void)controlTextDidChange:(NSNotification *)aNotification
+{
+	if (targetRange.location != NSNotFound) {
+		if (![colorField isEnabled] && MRIsEmptyString([calcField stringValue])) {
+			[colorField setEnabled:YES];
+		} else if ([colorField isEnabled] && !MRIsEmptyString([calcField stringValue])) {
+			[colorField setEnabled:NO];
+		}
+	}
 }
 
 @end

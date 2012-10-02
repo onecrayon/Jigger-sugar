@@ -66,7 +66,6 @@
 							<string key="NSFrame">{{230, 12}, {96, 32}}</string>
 							<reference key="NSSuperview" ref="363231259"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="771327171">
 								<int key="NSCellFlags">67239424</int>
@@ -130,7 +129,7 @@
 									<bool key="NSEnabled">YES</bool>
 									<object class="NSTokenFieldCell" key="NSCell" id="1069119663">
 										<int key="NSCellFlags">341966336</int>
-										<int key="NSCellFlags2">0</int>
+										<int key="NSCellFlags2">4194304</int>
 										<reference key="NSSupport" ref="427742726"/>
 										<reference key="NSControlView" ref="687270078"/>
 										<bool key="NSDrawsBackground">YES</bool>
@@ -678,7 +677,7 @@
 				<reference key="dict.values" ref="0"/>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">112</int>
+			<int key="maxID">113</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -692,10 +691,12 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>cancel:</string>
 							<string>doSubmitSheet:</string>
+							<string>updateCalculateField:</string>
 							<string>updateColorPreview:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -707,6 +708,7 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>cancel:</string>
 							<string>doSubmitSheet:</string>
+							<string>updateCalculateField:</string>
 							<string>updateColorPreview:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
@@ -717,6 +719,10 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">doSubmitSheet:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">updateCalculateField:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
