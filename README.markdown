@@ -26,6 +26,7 @@ Calculations also support other lesser-used [operators](https://github.com/daved
 * If you are editing multiple colors, only the first one will be shown in the GUI but all of them will be changed to whatever color you select
 * Only CSS hex colors are currently supported
 * By default hex colors will insert their three character variant, if possible (so `#fff` instead of `#ffffff`) and use lowercase letters. You can modify the formatting in the advanced preferences (Espresso&rarr;Preferences).
+* The OS X color picker is problematic because it will report one color but display another in the preview swatch. For instance, if you use the Web Safe Color palette and choose `#333333` the preview swatch at the top of the picker will actually display `#424242`. By default Jigger.sugar will output `#333` (the reported color), but if it is important to you that the color code matches the displayed color, you can change this behavior in the advanced preferences.
 
 ## Installation
 
