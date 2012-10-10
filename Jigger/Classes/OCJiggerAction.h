@@ -58,7 +58,6 @@ typedef enum {
 - (NSString *)shortestHexCodeWithHex:(NSString *)hexCode;
 
 - (IBAction)updateColorPreview:(id)sender;
-- (IBAction)updateCalculateField:(id)sender;
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
 - (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
