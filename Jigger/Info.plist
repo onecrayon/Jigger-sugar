@@ -12,5 +12,7 @@
 	<string>BNDL</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
+	<key>PluginPreferencesNibName</key>
+	<string>OCJiggerPreferences</string>
 </dict>
 </plist>

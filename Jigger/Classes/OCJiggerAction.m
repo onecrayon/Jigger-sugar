@@ -24,6 +24,18 @@
 @synthesize colorPreview;
 @synthesize dividerLine;
 
++ (void)load
+{
+	[super load];
+	
+	// This is really a bit of a hacky way to approach this, but it works...
+	// Runs one-time initialization code upon bundle load
+	// Setup the default preferences, in case they've never been modified
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	[defaults registerDefaults:[NSDictionary dictionaryWithObject:[NSNumber numberWithInteger:1] forKey:@"OCJiggerHexUseThreeCharacters"]];
+	[defaults registerDefaults:[NSDictionary dictionaryWithObject:[NSNumber numberWithInteger:1] forKey:@"OCJiggerHexUseLowercase"]];
+}
+
 - (id)initWithDictionary:(NSDictionary *)dictionary bundlePath:(NSString *)bundlePath {
 	self = [super init];
 	if (self) {
@@ -350,7 +362,11 @@
 - (NSString *)chosenHexColor
 {
 	NSColor *color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	return [[NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)] lowercaseString];
+	NSString *colorString = [NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)];
+	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerHexUseLowercase"] integerValue] == 1) {
+		colorString = [colorString lowercaseString];
+	}
+	return colorString;
 }
 
 - (NSString *)shortestHexCodeWithHex:(NSString *)hexCode
@@ -373,7 +389,11 @@
 {
 	// Update our preview text
 	NSString *chosenColor = [self chosenHexColor];
-	[colorPreview setStringValue:[self shortestHexCodeWithHex:chosenColor]];
+	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerHexUseThreeCharacters"] integerValue] == 1) {
+		[colorPreview setStringValue:[self shortestHexCodeWithHex:chosenColor]];
+	} else {
+		[colorPreview setStringValue:chosenColor];
+	}
 	if ([chosenColor isEqualToString:[originalColor lowercaseString]] || [[self shortestHexCodeWithHex:chosenColor] isEqualToString:[originalColor lowercaseString]]) {
 		// Since we are using the original color, hide our preview and clear button
 		[colorPreview setHidden:YES];
@@ -474,7 +494,9 @@
 		// Now that we've processed numbers, check for colors
 		if (([colorRanges count] > 0 || targetRange.location != NSNotFound) && (![chosenColor isEqualToString:[originalColor lowercaseString]] && ![[self shortestHexCodeWithHex:chosenColor] isEqualToString:[originalColor lowercaseString]])) {
 			// Make sure we insert the smallest string possible
-			chosenColor = [self shortestHexCodeWithHex:chosenColor];
+			if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerHexUseThreeCharacters"] integerValue] == 1) {
+				chosenColor = [self shortestHexCodeWithHex:chosenColor];
+			}
 			// Check to see if we are inserting from a targetRange
 			if (targetRange.location != NSNotFound) {
 				[colorRanges addObject:[NSValue valueWithRange:targetRange]];
@@ -491,6 +513,12 @@
 	
 	// Get rid of our sheet
 	[sheet orderOut:self];
+	
+	// If we were inserting something, make sure to enable everything for next time
+	if (targetRange.location != NSNotFound) {
+		[calcField setEnabled:YES];
+		[colorField setEnabled:YES];
+	}
 }
 
 #pragma mark NSTokenFieldDelegate methods

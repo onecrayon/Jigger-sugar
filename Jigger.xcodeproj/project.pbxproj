@@ -33,6 +33,7 @@
 		7A184F761612258600559E00 /* OCJiggerSheet.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A184F741612258600559E00 /* OCJiggerSheet.xib */; };
 		7A184F861612281B00559E00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A184F841612281B00559E00 /* Localizable.strings */; };
 		7A184F89161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A184F88161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m */; };
+		7A60280C1625E1770039A14C /* OCJiggerPreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A60280A1625E1770039A14C /* OCJiggerPreferences.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +99,7 @@
 		7A184F851612281B00559E00 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Localizable.strings; sourceTree = "<group>"; };
 		7A184F87161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSObject+OCJiggerTextActionContextAdditions.h"; path = "Classes/NSObject+OCJiggerTextActionContextAdditions.h"; sourceTree = "<group>"; };
 		7A184F88161229F200559E00 /* NSObject+OCJiggerTextActionContextAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSObject+OCJiggerTextActionContextAdditions.m"; path = "Classes/NSObject+OCJiggerTextActionContextAdditions.m"; sourceTree = "<group>"; };
+		7A60280B1625E1770039A14C /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = OCJiggerPreferences.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -228,6 +230,7 @@
 			children = (
 				7A184F841612281B00559E00 /* Localizable.strings */,
 				7A184F741612258600559E00 /* OCJiggerSheet.xib */,
+				7A60280A1625E1770039A14C /* OCJiggerPreferences.xib */,
 			);
 			path = en.lproj;
 			sourceTree = "<group>";
@@ -298,6 +301,7 @@
 			files = (
 				7A184F761612258600559E00 /* OCJiggerSheet.xib in Resources */,
 				7A184F861612281B00559E00 /* Localizable.strings in Resources */,
+				7A60280C1625E1770039A14C /* OCJiggerPreferences.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +371,14 @@
 				7A184F851612281B00559E00 /* en */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		7A60280A1625E1770039A14C /* OCJiggerPreferences.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7A60280B1625E1770039A14C /* en */,
+			);
+			name = OCJiggerPreferences.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
