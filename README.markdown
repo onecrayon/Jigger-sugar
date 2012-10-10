@@ -23,7 +23,7 @@ Calculations also support other lesser-used [operators](https://github.com/daved
 
 * If you are editing multiple colors, only the first one will be shown in the GUI but all of them will be changed to whatever color you select
 * Only CSS hex colors are currently supported
-* When inserting a hex color, it will insert the three character variant, if possible (so `#fff` instead of `#ffffff`)
+* By default hex colors will insert their three character variant, if possible (so `#fff` instead of `#ffffff`) and use lowercase letters. You can modify the formatting in the advanced preferences (Espresso&rarr;Preferences).
 
 ## Installation
 
