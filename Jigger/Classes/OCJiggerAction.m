@@ -34,6 +34,7 @@
 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 	[defaults registerDefaults:[NSDictionary dictionaryWithObject:[NSNumber numberWithInteger:1] forKey:@"OCJiggerHexUseThreeCharacters"]];
 	[defaults registerDefaults:[NSDictionary dictionaryWithObject:[NSNumber numberWithInteger:1] forKey:@"OCJiggerHexUseLowercase"]];
+	[defaults registerDefaults:[NSDictionary dictionaryWithObject:[NSNumber numberWithInteger:1] forKey:@"OCJiggerUseCalibratedColors"]];
 }
 
 - (id)initWithDictionary:(NSDictionary *)dictionary bundlePath:(NSString *)bundlePath {
@@ -353,7 +354,11 @@
 	[[NSScanner scannerWithString:gString] scanHexInt:&g];  
 	[[NSScanner scannerWithString:bString] scanHexInt:&b];
 	
-	color = [NSColor colorWithCalibratedRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerUseCalibratedColors"] integerValue] == 1) {
+		color = [NSColor colorWithCalibratedRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+	} else {
+		color = [NSColor colorWithDeviceRed:((float) r / 255.0f) green:((float) g / 255.0f) blue:((float) b / 255.0f) alpha:1.0f];
+	}
 	
 	// Set our default color
 	[colorField setColor:color];
@@ -361,7 +366,12 @@
 
 - (NSString *)chosenHexColor
 {
-	NSColor *color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	NSColor *color;
+	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerUseCalibratedColors"] integerValue] == 1) {
+		color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	} else {
+		color = [[colorField color] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+	}
 	NSString *colorString = [NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)];
 	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerHexUseLowercase"] integerValue] == 1) {
 		colorString = [colorString lowercaseString];

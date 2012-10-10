@@ -1,7 +1,5 @@
-Problems:
-	- Color hexes do not accurately reflect the color that is displayed in the color palette (although they do accurately reflect what the color palette *reports* that it is showing)
-
 Ideas:
 	- Add support for RGB(A) and HSL(A) CSS color notation
+	- Add support for non-USD currency formatting (both input and output)
 	- Language-specific support for color notation? Might make sense through ContextualSettings, if there's any interest
 	- Support modifying file paths using standard "open" type dialog? (Probably would need to be a separate action; shoe-horning it into the existing sheet makes little sense, desire for a single shortcut notwithstanding)

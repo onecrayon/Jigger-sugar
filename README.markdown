@@ -2,6 +2,8 @@
 
 Jigger.sugar adds an action to easily manipulate numbers and colors in [Espresso](http://macrabbit.com/espresso/). After installing it, use the shortcut `command =` to edit the number or CSS hex code under your cursor. If you have one or more selections when you use `command =`, all selected numbers and/or colors will be updated. If you have neither a color nor a number under your cursor, one will be inserted.
 
+To modify all instances in the document of the color or number under your cursor, use `command option =`. This can be very useful for managing a CSS color palette across a complex file, for instance.
+
 **Calculations**
 
 * When modifying multiple numbers simultaneously, click the arrow next to the "number" token to see all numbers that will be affected by your calculation
