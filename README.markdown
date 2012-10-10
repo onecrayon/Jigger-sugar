@@ -1,10 +1,22 @@
 # Jigger.sugar
 
-Jigger.sugar adds an action to easily manipulate numbers and colors in [Espresso](http://macrabbit.com/espresso/). After installing it, use the shortcut `command =` to edit the number or CSS hex code under your cursor. If you have one or more selections when you use `command =`, all selected numbers and/or colors will be updated. If you have neither a color nor a number under your cursor, one will be inserted.
+Jigger.sugar allows you to easily manipulate numbers and colors in [Espresso](http://macrabbit.com/espresso/). After installing, use the shortcut `command =` to edit the number or CSS hex code under your cursor. If you have one or more selections when you use `command =`, all selected numbers and/or colors will be updated. If you have neither a color nor a number under your cursor, one will be inserted.
 
 To modify all instances in the document of the color or number under your cursor, use `command option =`. This can be very useful for managing a CSS color palette across a complex file, for instance.
 
-**Calculations**
+## Installation
+
+**Requires Espresso 2.0**
+
+1. [Download Jigger.sugar](https://github.com/downloads/onecrayon/Jigger-sugar/Jigger.sugar.zip)
+2. Unzip the downloaded file (if your browser doesn't do it for you)
+3. Double click the Jigger.sugar file to install it
+
+You **cannot** install this Sugar by cloning the git repository or using the "zip" button at the top of this page, because it is written in Objective-C and has to be compiled.
+
+## Usage notes
+
+### Calculations
 
 * When modifying multiple numbers simultaneously, click the arrow next to the "number" token to see all numbers that will be affected by your calculation
 * If you append prefixes to your numbers, the last prefix in the calculation will be used (`12px/16em` = 0.75em)
@@ -21,22 +33,12 @@ To modify all instances in the document of the color or number under your cursor
 
 Calculations also support other lesser-used [operators](https://github.com/davedelong/DDMathParser/wiki/Operators) and [functions](https://github.com/davedelong/DDMathParser/wiki/Built-in-Functions).
 
-**Colors**
+### Colors
 
 * If you are editing multiple colors, only the first one will be shown in the GUI but all of them will be changed to whatever color you select
 * Only CSS hex colors are currently supported
 * By default hex colors will insert their three character variant, if possible (so `#fff` instead of `#ffffff`) and use lowercase letters. You can modify the formatting in the advanced preferences (Espresso&rarr;Preferences).
 * The OS X color picker is problematic because it will report one color but display another in the preview swatch. For instance, if you use the Web Safe Color palette and choose `#333333` the preview swatch at the top of the picker will actually display `#424242`. By default Jigger.sugar will output `#333` (the reported color), but if it is important to you that the color code matches the displayed color, you can change this behavior in the advanced preferences.
-
-## Installation
-
-**Requires Espresso 2.0**
-
-1. [Download Jigger.sugar](https://github.com/downloads/onecrayon/Jigger-sugar/Jigger.sugar.zip)
-2. Unzip the downloaded file (if your browser doesn't do it for you)
-3. Double click the Jigger.sugar file to install it
-
-You **cannot** install this Sugar by cloning the git repository or using the "zip" button at the top of this page, because it is written in Objective-C and has to be compiled.
 
 ## MIT License
 
