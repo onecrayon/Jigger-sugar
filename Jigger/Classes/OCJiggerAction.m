@@ -367,13 +367,14 @@
 - (NSString *)chosenHexColor
 {
 	NSColor *color;
-	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerUseCalibratedColors"] integerValue] == 1) {
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	if ([[defaults objectForKey:@"OCJiggerUseCalibratedColors"] integerValue] == 1) {
 		color = [[colorField color] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
 	} else {
 		color = [[colorField color] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
 	}
 	NSString *colorString = [NSString stringWithFormat:@"#%0.2X%0.2X%0.2X", (int)([color redComponent] * 255), (int)([color greenComponent] * 255), (int)([color blueComponent] * 255)];
-	if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OCJiggerHexUseLowercase"] integerValue] == 1) {
+	if ([[defaults objectForKey:@"OCJiggerHexUseLowercase"] integerValue] == 1) {
 		colorString = [colorString lowercaseString];
 	}
 	return colorString;
