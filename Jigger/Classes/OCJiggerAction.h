@@ -46,6 +46,7 @@
 - (IBAction)updateColorPreview:(id)sender;
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
+- (IBAction)calculationHelp:(id)sender;
 
 - (SXZone *)zoneAtIndex:(NSUInteger)index forContext:(id)context;
 - (NSURL *)parentURLFromContext:(id)context;

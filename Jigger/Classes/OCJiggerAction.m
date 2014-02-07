@@ -475,6 +475,10 @@
 	[[myContext windowForSheet] endSheet:customSheet returnCode:NSModalResponseCancel];
 }
 
+- (IBAction)calculationHelp:(id)sender {
+	[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://github.com/davedelong/DDMathParser/wiki/Operators"]];
+}
+
 - (void)configureCalculateMode:(NSString *)startValue
 {
 	// Stick in the placeholder number or tag
