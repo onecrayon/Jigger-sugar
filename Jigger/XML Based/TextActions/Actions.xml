@@ -6,14 +6,5 @@
 		<key-equivalent>command =</key-equivalent>
 		<when-disabled>show</when-disabled>
 	</action>
-	
-	<action id="com.onecrayon.sugar.jigger.jigger-all" category="actions.jigger/2">
-		<class>OCJiggerAction</class>
-		<key-equivalent>command option =</key-equivalent>
-		<when-disabled>show</when-disabled>
-		<setup>
-			<target>all</target>
-		</setup>
-	</action>
 
 </action-recipes>

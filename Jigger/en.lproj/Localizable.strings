@@ -3,12 +3,9 @@
 
 // Actions
 "com.onecrayon.sugar.jigger.jigger-selection.title" = "Insert Color or Number...";
+"com.onecrayon.sugar.jigger.jigger-selection.title.selection" = "Modify Colors or Numbers...";
 "com.onecrayon.sugar.jigger.jigger-selection.title.number-single" = "Calculate With Number...";
-"com.onecrayon.sugar.jigger.jigger-selection.title.color-single" = "Modify Color...";
-"com.onecrayon.sugar.jigger.jigger-selection.title.selection" = "Modify Colors and Numbers...";
 "com.onecrayon.sugar.jigger.jigger-selection.title.number-selection" = "Calculate With Numbers...";
+"com.onecrayon.sugar.jigger.jigger-selection.title.color-single" = "Modify Color...";
 "com.onecrayon.sugar.jigger.jigger-selection.title.color-selection" = "Modify Colors...";
-
-"com.onecrayon.sugar.jigger.jigger-all.title" = "Modify All Copies...";
-"com.onecrayon.sugar.jigger.jigger-all.title.color-all" = "Modify All Copies of Color...";
-"com.onecrayon.sugar.jigger.jigger-all.title.number-all" = "Calculate All Copies of Number...";
+"com.onecrayon.sugar.jigger.jigger-selection.title.file-chooser" = "Browse For File...";

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<injections>
+
+	<injection name="com.onecrayon.jigger.html-url-attributes" selector="tag.open" action="insert-before-children">
+		<zone>
+			<expression>\s+(src|href)(=)</expression>
+			<capture number="1" name="attribute-name.x-url"/>
+			<capture number="2" name="punctuation.separator.attribute"/>
+		</zone>
+	</injection>
+	
+</injections>

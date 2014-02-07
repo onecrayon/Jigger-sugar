@@ -8,13 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <MRRegularExpressionAdditions.h>
-
-
-// Enum for tracking modes
-typedef enum {
-    OCJiggerCalculateMode = 1,
-    OCJiggerColorMode = 2
-} OCJiggerMode;
+#import <EspressoTextActions.h>
 
 
 @interface OCJiggerAction : NSObject <NSTokenFieldDelegate> {
@@ -23,33 +17,25 @@ typedef enum {
 	MRRegularExpression *selNumberRE;
 	MRRegularExpression *singleColorRE;
 	MRRegularExpression *selColorRE;
-	NSMutableArray *numberRanges;
-	NSMutableArray *colorRanges;
-	NSRange targetRange;
 	NSString *originalNumber;
 	NSString *originalColor;
+	NSMutableArray *selectedNumbers;
+	SXSelectorGroup *urlTargets;
 	id myContext;
-	NSWindow *customSheet;
-	NSView *calcView;
-	NSView *colorView;
-	NSTokenField *calcField;
-	NSColorWell *colorField;
-	NSButton *clearColorButton;
-	NSTextField *colorPreview;
-	NSBox *dividerLine;
-	BOOL modifyAllFlag;
 }
 
 @property(retain) IBOutlet NSWindow *customSheet;
-@property(retain) IBOutlet NSView *calcView;
-@property(retain) IBOutlet NSView *colorView;
+@property(retain) IBOutlet NSTabView *tabView;
+@property(retain) IBOutlet NSView *changeAllView;
+@property(retain) IBOutlet NSTextField *changeAllNumber;
 @property(retain) IBOutlet NSTokenField *calcField;
 @property(retain) IBOutlet NSColorWell *colorField;
 @property(retain) IBOutlet NSButton *clearColorButton;
 @property(retain) IBOutlet NSTextField *colorPreview;
-@property(retain) IBOutlet NSBox *dividerLine;
+@property(retain) IBOutlet NSButton *changeAllButton;
+@property(retain) IBOutlet NSView *accessoryView;
+@property(retain) IBOutlet NSButton *rootRelativeButton;
 
-- (void)showMode:(OCJiggerMode)mode hideOthers:(BOOL)hideFlag;
 - (void)configureCalculateMode:(NSString *)startValue;
 - (void)configureColorMode:(NSString *)startValue;
 // Returns the six-digit hex code that the user has chosen
@@ -60,6 +46,10 @@ typedef enum {
 - (IBAction)updateColorPreview:(id)sender;
 - (IBAction)doSubmitSheet:(id)sender;
 - (IBAction)cancel:(id)sender;
-- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo;
+
+- (SXZone *)zoneAtIndex:(NSUInteger)index forContext:(id)context;
+- (NSURL *)parentURLFromContext:(id)context;
+- (id)projectContextForContext:(id)context;
+- (NSURL *)rootURLForContext:(id)context;
 
 @end
