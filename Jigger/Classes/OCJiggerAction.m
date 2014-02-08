@@ -91,15 +91,15 @@
 	} else {
 		selText = [[context string] substringWithRange:firstRange];
 	}
-	NSArray *numberMatches = [selText matchesForExpression:singleNumberRE];
-	NSArray *colorMatches = [selText matchesForExpression:singleColorRE];
+	NSArray *numberMatches = [selText matchesForExpression:selNumberRE];
+	NSArray *colorMatches = [selText matchesForExpression:selColorRE];
 	
-	if ([numberMatches count] > 0 && [colorMatches count] > 0 && firstRange.length > 0) {
+	if (numberMatches.count > 0 && colorMatches.count > 0 && firstRange.length > 0) {
 		return @"@selection";
-	} else if ([numberMatches count] > 0) {
-		return (firstRange.length == 0 ? @"@number-single" : @"number-selection");
-	} else if ([colorMatches count] > 0) {
-		return (firstRange.length == 0 ? @"@color-single" : @"@color-selection");
+	} else if (numberMatches.count > 0) {
+		return (numberMatches.count == 1 ? @"@number-single" : @"@number-selection");
+	} else if (colorMatches.count > 0) {
+		return (colorMatches.count == 1 ? @"@color-single" : @"@color-selection");
 	}
 	return nil;
 }
