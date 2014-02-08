@@ -9,4 +9,39 @@
 		</zone>
 	</injection>
 	
+	<injection name="com.onecrayon.jigger.css-url-targets" selector="support.function.misc.css" action="attach-before-target">
+		<zone name="support.function.misc.css.x-url">
+			<starts-with>
+				<expression>(url)\s*(\()</expression>
+				<capture number="1" name="name"/>
+				<capture number="2" name="punctuation.brace.round.begin"/>
+			</starts-with>
+			<ends-with>
+				<expression>\)</expression>
+				<capture number="0" name="punctuation.brace.round.end"/>
+			</ends-with>
+			<subzones>
+				<zone name="string.quoted">
+					<starts-with>
+						<expression>("|')</expression>
+						<capture number="0" name="punctuation.definition.begin"/>
+					</starts-with>
+					<ends-with>
+						<expression>\1</expression>
+						<capture number="0" name="punctuation.definition.end"/>
+					</ends-with>
+					<subzones>
+						<zone name="constant.character.escape.css">
+							<expression>\\.</expression>
+						</zone>
+					</subzones>
+				</zone>
+				<zone>
+					<expression>[^) \t]+</expression>
+					<capture number="0" name="parameter.misc.css.x-url"/>
+				</zone>
+			</subzones>
+		</zone>
+	</injection>
+	
 </injections>

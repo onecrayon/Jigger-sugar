@@ -67,7 +67,7 @@
 		NSString *colorRE = @"#(\\h{3}|\\h{6})";
 		singleColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"^%@$", colorRE]];
 		selColorRE = [[MRRegularExpression alloc] initWithString:[NSString stringWithFormat:@"(?:^|\\b|(?<=\\s))%@(?:$|\\b|(?=\\s))", colorRE]];
-		urlTargets = [SXSelectorGroup selectorGroupWithString:@"attribute-name.x-url + punctuation + string, attribute-name.x-url + punctuation + string *"];
+		urlTargets = [SXSelectorGroup selectorGroupWithString:@"attribute-name.x-url + punctuation + string, attribute-name.x-url + punctuation + string *, support.function.css.x-url > punctuation.brace.round.begin + string, support.function.css.x-url > punctuation.brace.round.begin + string *, support.function.css.x-url > punctuation.brace.round.begin + x-url, support.function.css.x-url > punctuation.brace.round.begin + x-url + punctuation.brace.round.end"];
 		
 		// Configure DDMathParser to use % as percentages instead of modulus
 		[[DDMathOperatorSet defaultOperatorSet] setInterpretsPercentSignAsModulo:NO];
@@ -115,17 +115,31 @@
 	SXZone *zone = [self zoneAtIndex:range.location forContext:context];
 	if ([urlTargets matches:zone]) {
 		// Find the string surrounding the URL
-		SXSelector *target = [SXSelector selectorWithString:@"string"];
-		while (![target matches:zone] && [zone parent]) {
-			zone = [zone parent];
+		SXSelectorGroup *target = [SXSelectorGroup selectorGroupWithString:@"string, x-url"];
+		SXSelector *zoneFollowsURL = [SXSelector selectorWithString:@"x-url + *"];
+		if ([zoneFollowsURL matches:zone]) {
+			// We're after the actual URL, so adjust to the previous zone
+			zone = [self zoneAtIndex:range.location - 1 forContext:context];
+		} else {
+			// Make sure we are at the root string or x-url zone
+			while (![target matches:zone] && [zone parent]) {
+				zone = [zone parent];
+			}
 		}
 		
 		// Grab our original path string by excluding the starting and ending punctuation
 		NSRange zoneRange = zone.range;
-		NSRange startPuncRange = [[zone childAtIndex:0] range];
-		NSRange endPuncRange = [[zone childAtIndex:[zone childCount] - 1] range];
-		NSRange stringRange = NSMakeRange(zoneRange.location + startPuncRange.length, zoneRange.length - startPuncRange.length - endPuncRange.length);
-		NSString *originalPathString = [[[context string] substringWithRange:stringRange] stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
+		NSRange pathRange;
+		SXSelector *plainURLZone = [SXSelector selectorWithString:@"x-url"];
+		if ([plainURLZone matches:zone]) {
+			// This is just a URL (not a string), so we just select the range
+			pathRange = zone.range;
+		} else {
+			NSRange startPuncRange = [[zone childAtIndex:0] range];
+			NSRange endPuncRange = [[zone childAtIndex:[zone childCount] - 1] range];
+			pathRange = NSMakeRange(zoneRange.location + startPuncRange.length, zoneRange.length - startPuncRange.length - endPuncRange.length);
+		}
+		NSString *originalPathString = [[[context string] substringWithRange:pathRange] stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
 		
 		// Construct the root URL that we'll use for the selector dialog
 		NSURL *rootURL;
@@ -201,8 +215,8 @@
 				NSRange selection;
 				
 				// Replace the contents of our string with the new link
-				[recipe replaceRange:stringRange withString:targetPath];
-				selection = NSMakeRange(stringRange.location, targetPath.length);
+				[recipe replaceRange:pathRange withString:targetPath];
+				selection = NSMakeRange(pathRange.location, targetPath.length);
 				
 				// Run the recipe and select the new contents of the string
 				[context applyTextRecipe:recipe];
